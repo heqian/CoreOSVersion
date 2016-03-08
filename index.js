@@ -59,7 +59,7 @@ function update(text) {
 			status: text
 		},
 		function(error, tweet, response) {
-			if (error) throw error;
+			if (error) console.error(error);
 		});
 }
 
@@ -75,33 +75,37 @@ function check() {
 			fetch(HTTPS_API_URLS.STABLE, callback);
 		}
 	}, function(error, result) {
-		try {
-			var versions = {
-				"alpha": result.alpha.release_info,
-				"beta": result.beta.release_info,
-				"stable": result.stable.release_info
-			};
-
-			database.findOne(versions, function(error, document) {
-				if (error) throw error;
-
-				if (document === null) {
-					database.insert(versions, function(error) {
-						if (error) throw error;
-					});
-
-					update(
-						"Stable: " + versions.stable.version + "\n" +
-						"Beta: " + versions.beta.version + "\n" +
-						"Alpha: " + versions.alpha.version
-					);
-				} else {
-					console.log("No news is good news. :)");
-				}
-			});
-		} catch (exception) {
-			console.error(exception);
+		if (error) {
+			console.error(error);
+			return;
 		}
+
+		var versions = {
+			"alpha": result.alpha.release_info,
+			"beta": result.beta.release_info,
+			"stable": result.stable.release_info
+		};
+
+		database.findOne(versions, function(error, document) {
+			if (error) {
+				console.error(error);
+				return;
+			}
+
+			if (document === null) {
+				database.insert(versions, function(error) {
+					if (error) console.error(error);
+				});
+
+				update(
+					"Stable: " + versions.stable.version + "\n" +
+					"Beta: " + versions.beta.version + "\n" +
+					"Alpha: " + versions.alpha.version
+				);
+			} else {
+				console.log("No news is good news. :)");
+			}
+		});
 	});
 
 	setTimeout(check, config.interval);
