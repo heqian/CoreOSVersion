@@ -1,7 +1,7 @@
 {
 	"name": "coreosversion",
 	"version": "1.0.0",
-	"description": "A Twitter bot for reporting the release of the latest CoreOS version.",
+	"description": "A Twitter bot @CoreOSVersion for reporting the latest versions of CoreOS.",
 	"main": "index.js",
 	"scripts": {
 		"test": "node index.js"
