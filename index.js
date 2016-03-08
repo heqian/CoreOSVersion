@@ -47,6 +47,11 @@ function fetch(options, callback) {
 			var json = JSON.parse(output.toString());
 			callback(null, json);
 		});
+
+		response.on("error", function(error) {
+			console.error(error);
+			callback(error, null);
+		});
 	});
 
 	request.end();
@@ -103,7 +108,7 @@ function check() {
 					"Alpha: " + versions.alpha.version
 				);
 			} else {
-				console.log("No news is good news. :)");
+				console.log("[%s] No news is good news. :)", new Date().toString());
 			}
 		});
 	});
