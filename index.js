@@ -80,6 +80,8 @@ function check() {
 			fetch(HTTPS_API_URLS.STABLE, callback);
 		}
 	}, function(error, result) {
+		setTimeout(check, config.interval);
+
 		if (error) {
 			console.error(error);
 			return;
@@ -112,8 +114,6 @@ function check() {
 			}
 		});
 	});
-
-	setTimeout(check, config.interval);
 }
 
 check();
