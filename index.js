@@ -44,7 +44,11 @@ function fetch(options, callback) {
 		});
 
 		response.on("end", function() {
-			var json = JSON.parse(output.toString());
+			try {
+				var json = JSON.parse(output.toString());
+			} catch (exception) {
+				callback(exception, null);
+			}
 			callback(null, json);
 		});
 
