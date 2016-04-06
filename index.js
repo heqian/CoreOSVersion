@@ -46,10 +46,10 @@ function fetch(options, callback) {
 		response.on("end", function() {
 			try {
 				var json = JSON.parse(output.toString());
+				callback(null, json);
 			} catch (exception) {
 				callback(exception, null);
 			}
-			callback(null, json);
 		});
 
 		response.on("error", function(error) {
