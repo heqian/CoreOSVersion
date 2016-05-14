@@ -36,14 +36,14 @@ var HTTPS_API_URLS = {
 }
 
 function fetch(options, callback) {
-	var request = https.request(options, function(response) {
+	var request = https.request(options, function (response) {
 		var output = "";
 
-		response.on("data", function(chunk) {
+		response.on("data", function (chunk) {
 			output += chunk;
 		});
 
-		response.on("end", function() {
+		response.on("end", function () {
 			try {
 				var json = JSON.parse(output.toString());
 				callback(null, json);
@@ -52,11 +52,16 @@ function fetch(options, callback) {
 			}
 		});
 
-		response.on("error", function(error) {
+		response.on("error", function (error) {
 			console.error(error);
 			callback(error, null);
 		});
 	});
+
+	request.on("error", function (error) {
+		console.error(error);
+		callback(error, null);
+	})
 
 	request.end();
 }
@@ -67,23 +72,23 @@ function update(text) {
 		{
 			status: text
 		},
-		function(error, tweet, response) {
+		function (error, tweet, response) {
 			if (error) console.error(error);
 		});
 }
 
 function check() {
 	async.parallel({
-		"alpha": function(callback) {
+		"alpha": function (callback) {
 			fetch(HTTPS_API_URLS.ALPHA, callback);
 		},
-		"beta": function(callback) {
+		"beta": function (callback) {
 			fetch(HTTPS_API_URLS.BETA, callback);
 		},
-		"stable": function(callback) {
+		"stable": function (callback) {
 			fetch(HTTPS_API_URLS.STABLE, callback);
 		}
-	}, function(error, result) {
+	}, function (error, result) {
 		setTimeout(check, config.interval);
 
 		if (error) {
@@ -97,14 +102,14 @@ function check() {
 			"stable": result.stable.release_info
 		};
 
-		database.findOne(versions, function(error, document) {
+		database.findOne(versions, function (error, document) {
 			if (error) {
 				console.error(error);
 				return;
 			}
 
 			if (document === null) {
-				database.insert(versions, function(error) {
+				database.insert(versions, function (error) {
 					if (error) console.error(error);
 				});
 
