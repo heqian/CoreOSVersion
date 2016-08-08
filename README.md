@@ -9,5 +9,5 @@ cp config.sample.js config.js
 # Add your valid Twitter developer credentials
 vi config.js
 npm install
-nohub node index.js &
+nohup node index.js &
 ```
