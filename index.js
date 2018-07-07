@@ -1,128 +1,127 @@
-"use strict";
+'use strict'
 
-var https = require("https");
-var nedb = require("nedb");
-var async = require("async");
-var twitter = require("twitter");
-var config = require("./config.js");
+const https = require('https')
+const async = require('async')
+const path = require('path')
+const NeDB = require('nedb')
+const Twitter = require('twitter')
+const config = require('./config.js')
 
-var database = new nedb({
-	filename: __dirname + "/versions.db",
-	autoload: true
-});
-
-var client = new twitter(config.twitter);
-var HTTPS_API_URLS = {
-	MAIN: {
-		hostname: "coreos.com",
-		path: "/releases/releases.json",
-		method: "GET"
-	},
-	ALPHA: {
-		hostname: "coreos.com",
-		path: "/dist/aws/aws-alpha.json",
-		method: "GET"
-	},
-	BETA: {
-		hostname: "coreos.com",
-		path: "/dist/aws/aws-beta.json",
-		method: "GET"
-	},
-	STABLE: {
-		hostname: "coreos.com",
-		path: "/dist/aws/aws-stable.json",
-		method: "GET"
-	}
+const HTTPS_API_URLS = {
+  MAIN: {
+    hostname: 'coreos.com',
+    path: '/releases/releases.json',
+    method: 'GET'
+  },
+  ALPHA: {
+    hostname: 'coreos.com',
+    path: '/releases/releases-alpha.json',
+    method: 'GET'
+  },
+  BETA: {
+    hostname: 'coreos.com',
+    path: '/releases/releases-beta.json',
+    method: 'GET'
+  },
+  STABLE: {
+    hostname: 'coreos.com',
+    path: '/releases/releases-stable.json',
+    method: 'GET'
+  }
 }
 
-function fetch(options, callback) {
-	var request = https.request(options, function (response) {
-		var output = "";
+let client = new Twitter(config.twitter)
+let database = new NeDB({
+  filename: path.join(__dirname, 'versions.db'),
+  autoload: true
+})
 
-		response.on("data", function (chunk) {
-			output += chunk;
-		});
+function fetch (options, callback) {
+  let request = https.request(options, response => {
+    let output = ''
 
-		response.on("end", function () {
-			try {
-				var json = JSON.parse(output.toString());
-				callback(null, json);
-			} catch (exception) {
-				callback(exception, null);
-			}
-		});
+    response.on('data', chunk => {
+      output += chunk
+    })
 
-		response.on("error", function (error) {
-			console.error(error);
-			callback(error, null);
-		});
-	});
+    response.on('end', () => {
+      try {
+        let json = JSON.parse(output.toString())
+        callback(null, json)
+      } catch (exception) {
+        callback(exception, null)
+      }
+    })
 
-	request.on("error", function (error) {
-		console.error(error);
-		callback(error, null);
-	})
+    response.on('error', error => {
+      console.error(error)
+      callback(error, null)
+    })
+  })
 
-	request.end();
+  request.on('error', error => {
+    console.error(error)
+    callback(error, null)
+  })
+
+  request.end()
 }
 
-function update(text) {
-	client.post(
-		"statuses/update",
-		{
-			status: text
-		},
-		function (error, tweet, response) {
-			if (error) console.error(error);
-		});
+function update (text) {
+  client.post(
+    'statuses/update',
+    {
+      status: text
+    },
+    (error, tweet, response) => {
+      if (error) console.error(error)
+    })
 }
 
-function check() {
-	async.parallel({
-		"alpha": function (callback) {
-			fetch(HTTPS_API_URLS.ALPHA, callback);
-		},
-		"beta": function (callback) {
-			fetch(HTTPS_API_URLS.BETA, callback);
-		},
-		"stable": function (callback) {
-			fetch(HTTPS_API_URLS.STABLE, callback);
-		}
-	}, function (error, result) {
-		setTimeout(check, config.interval);
+function check () {
+  async.parallel({
+    'alpha': callback => {
+      fetch(HTTPS_API_URLS.ALPHA, callback)
+    },
+    'beta': callback => {
+      fetch(HTTPS_API_URLS.BETA, callback)
+    },
+    'stable': callback => {
+      fetch(HTTPS_API_URLS.STABLE, callback)
+    }
+  }, (error, result) => {
+    if (error) {
+      console.error(error)
+      return
+    }
 
-		if (error) {
-			console.error(error);
-			return;
-		}
+    let versions = {
+      'alpha': Object.keys(result.alpha).shift(),
+      'beta': Object.keys(result.beta).shift(),
+      'stable': Object.keys(result.stable).shift()
+    }
 
-		var versions = {
-			"alpha": result.alpha.release_info,
-			"beta": result.beta.release_info,
-			"stable": result.stable.release_info
-		};
+    database.findOne(versions, function (error, document) {
+      if (error) {
+        console.error(error)
+        return
+      }
 
-		database.findOne(versions, function (error, document) {
-			if (error) {
-				console.error(error);
-				return;
-			}
+      if (document === null) {
+        database.insert(versions, function (error) {
+          if (error) console.error(error)
+        })
 
-			if (document === null) {
-				database.insert(versions, function (error) {
-					if (error) console.error(error);
-				});
-
-				update(
-					"Stable: " + versions.stable.version + "\n" +
-					"Beta: " + versions.beta.version + "\n" +
-					"Alpha: " + versions.alpha.version
-				);
-			} else {
-				console.log("[%s] No news is good news. :)", new Date().toString());
-			}
-		});
-	});
+        update(
+          'Stable: ' + versions.stable + '\n' +
+          'Beta: ' + versions.beta + '\n' +
+          'Alpha: ' + versions.alpha
+        )
+      } else {
+        console.log('[%s] No news is good news. :)', new Date().toString())
+      }
+    })
+  })
 }
 
-check();
+setInterval(check, config.interval)

@@ -1,11 +1,11 @@
-"use strict";
+'use strict'
 
 module.exports = {
-	twitter: {
-		consumer_key: "",
-		consumer_secret: "",
-		access_token_key: "",
-		access_token_secret: ""
-	},
-	interval: 60000	// in milliseconds
-};
+  twitter: {
+    consumer_key: '',
+    consumer_secret: '',
+    access_token_key: '',
+    access_token_secret: ''
+  },
+  interval: 60000 // in milliseconds
+}
