@@ -1,6 +1,6 @@
+const http = require('http')
 const https = require('https')
 const path = require('path')
-const express = require('express')
 const async = require('async')
 const NeDB = require('nedb')
 const Twitter = require('twitter')
@@ -130,19 +130,23 @@ function check () {
 
 setInterval(check, 60000)
 
-express()
-  .get('/', (request, response) => {
+http
+  .createServer((request, response) => {
     database
       .find()
       .sort({ _id: -1 })
-      .limit(10)
+      .limit(1)
       .exec((error, documents) => {
         if (error) {
           console.error(error)
-          response.sendStatus(500)
+          response.statusCode = 500
+          response.end()
         }
 
-        response.json(documents)
+        response.statusCode = 200
+        response.setHeader('Content-Type', 'application/json')
+        response.write(JSON.stringify(documents, '', 2))
+        response.end()
       })
   })
   .listen(process.env.PORT || 80)

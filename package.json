@@ -19,11 +19,7 @@
 	"homepage": "https://github.com/heqian/CoreOSVersion#readme",
 	"dependencies": {
 		"async": "*",
-		"express": "*",
 		"nedb": "*",
 		"twitter": "*"
-	},
-	"engines": {
-		"node": "11.x"
 	}
 }
