@@ -1,8 +1,7 @@
-'use strict'
-
 const https = require('https')
-const async = require('async')
 const path = require('path')
+const express = require('express')
+const async = require('async')
 const NeDB = require('nedb')
 const Twitter = require('twitter')
 
@@ -130,3 +129,20 @@ function check () {
 }
 
 setInterval(check, 60000)
+
+express()
+  .get('/', (request, response) => {
+    database
+      .find()
+      .sort({ _id: -1 })
+      .limit(10)
+      .exec((error, documents) => {
+        if (error) {
+          console.error(error)
+          response.sendStatus(500)
+        }
+
+        response.json(documents)
+      })
+  })
+  .listen(process.env.PORT || 80)
