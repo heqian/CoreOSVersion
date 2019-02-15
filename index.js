@@ -106,14 +106,14 @@ function check () {
       'stable': Object.keys(result.stable).shift()
     }
 
-    database.findOne(versions, function (error, document) {
+    database.findOne(versions, (error, document) => {
       if (error) {
         console.error(error)
         return
       }
 
       if (document === null) {
-        database.insert(versions, function (error) {
+        database.insert(versions, error => {
           if (error) console.error(error)
         })
 
