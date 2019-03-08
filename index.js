@@ -83,49 +83,53 @@ function update (text) {
 }
 
 function check () {
-  async.parallel({
-    'alpha': callback => {
-      fetch(HTTPS_API_URLS.ALPHA, callback)
-    },
-    'beta': callback => {
-      fetch(HTTPS_API_URLS.BETA, callback)
-    },
-    'stable': callback => {
-      fetch(HTTPS_API_URLS.STABLE, callback)
-    }
-  }, (error, result) => {
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    let versions = {
-      'alpha': Object.keys(result.alpha).shift(),
-      'beta': Object.keys(result.beta).shift(),
-      'stable': Object.keys(result.stable).shift()
-    }
-
-    database.findOne(versions, (error, document) => {
+  try {
+    async.parallel({
+      'alpha': callback => {
+        fetch(HTTPS_API_URLS.ALPHA, callback)
+      },
+      'beta': callback => {
+        fetch(HTTPS_API_URLS.BETA, callback)
+      },
+      'stable': callback => {
+        fetch(HTTPS_API_URLS.STABLE, callback)
+      }
+    }, (error, result) => {
       if (error) {
         console.error(error)
         return
       }
 
-      if (document === null) {
-        database.insert(versions, error => {
-          if (error) console.error(error)
-        })
-
-        update(
-          'Stable: ' + versions.stable + '\n' +
-          'Beta: ' + versions.beta + '\n' +
-          'Alpha: ' + versions.alpha
-        )
-      } else {
-        console.log('[%s] No news is good news. :)', new Date().toString())
+      let versions = {
+        'alpha': Object.keys(result.alpha).shift(),
+        'beta': Object.keys(result.beta).shift(),
+        'stable': Object.keys(result.stable).shift()
       }
+
+      database.findOne(versions, (error, document) => {
+        if (error) {
+          console.error(error)
+          return
+        }
+
+        if (document === null) {
+          database.insert(versions, error => {
+            if (error) console.error(error)
+          })
+
+          update(
+            'Stable: ' + versions.stable + '\n' +
+            'Beta: ' + versions.beta + '\n' +
+            'Alpha: ' + versions.alpha
+          )
+        } else {
+          console.log('[%s] No news is good news. :)', new Date().toString())
+        }
+      })
     })
-  })
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 setInterval(check, 60000)
