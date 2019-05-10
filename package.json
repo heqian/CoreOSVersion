@@ -19,7 +19,6 @@
 	"homepage": "https://github.com/heqian/CoreOSVersion#readme",
 	"dependencies": {
 		"async": "*",
-		"nedb": "*",
 		"twitter": "*"
 	}
 }

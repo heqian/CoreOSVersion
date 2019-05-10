@@ -1,9 +1,8 @@
 const http = require('http')
-const https = require('https')
-const path = require('path')
 const async = require('async')
-const NeDB = require('nedb')
 const Twitter = require('twitter')
+const fetch = require('./fetch')
+const KvDb = require('./kvdb')
 
 const HTTPS_API_URLS = {
   MAIN: {
@@ -35,41 +34,7 @@ let client = new Twitter({
   access_token_secret: process.env.ACCESS_TOKEN_SECRET
 })
 
-let database = new NeDB({
-  filename: path.join(__dirname, 'versions.db'),
-  autoload: true
-})
-
-function fetch (options, callback) {
-  let request = https.request(options, response => {
-    let output = ''
-
-    response.on('data', chunk => {
-      output += chunk
-    })
-
-    response.on('end', () => {
-      try {
-        let json = JSON.parse(output.toString())
-        callback(null, json)
-      } catch (exception) {
-        callback(exception, null)
-      }
-    })
-
-    response.on('error', error => {
-      console.error(error)
-      callback(error, null)
-    })
-  })
-
-  request.on('error', error => {
-    console.error(error)
-    callback(error, null)
-  })
-
-  request.end()
-}
+let storage = new KvDb(process.env.BUCKET)
 
 function update (text) {
   client.post(
@@ -83,40 +48,33 @@ function update (text) {
 }
 
 function check () {
-  try {
-    async.parallel({
-      'alpha': callback => {
-        fetch(HTTPS_API_URLS.ALPHA, callback)
-      },
-      'beta': callback => {
-        fetch(HTTPS_API_URLS.BETA, callback)
-      },
-      'stable': callback => {
-        fetch(HTTPS_API_URLS.STABLE, callback)
-      }
-    }, (error, result) => {
-      if (error) {
-        console.error(error)
-        return
-      }
+  async.parallel({
+    'alpha': callback => {
+      fetch(HTTPS_API_URLS.ALPHA, null, callback)
+    },
+    'beta': callback => {
+      fetch(HTTPS_API_URLS.BETA, null, callback)
+    },
+    'stable': callback => {
+      fetch(HTTPS_API_URLS.STABLE, null, callback)
+    }
+  }, (error, result) => {
+    if (error) {
+      console.error(error)
+      return
+    }
 
-      let versions = {
-        'alpha': Object.keys(result.alpha).shift(),
-        'beta': Object.keys(result.beta).shift(),
-        'stable': Object.keys(result.stable).shift()
-      }
+    let versions = {
+      'alpha': Object.keys(JSON.parse(result.alpha)).shift(),
+      'beta': Object.keys(JSON.parse(result.beta)).shift(),
+      'stable': Object.keys(JSON.parse(result.stable)).shift()
+    }
 
-      database.findOne(versions, (error, document) => {
-        if (error) {
-          console.error(error)
-          return
-        }
-
-        if (document === null) {
-          database.insert(versions, error => {
-            if (error) console.error(error)
-          })
-
+    storage
+      .get('versions')
+      .then(storedVersions => {
+        if (storedVersions !== JSON.stringify(versions)) {
+          storage.set('versions', versions)
           update(
             'Stable: ' + versions.stable + '\n' +
             'Beta: ' + versions.beta + '\n' +
@@ -126,30 +84,27 @@ function check () {
           console.log('[%s] No news is good news. :)', new Date().toString())
         }
       })
-    })
-  } catch (error) {
-    console.error(error)
-  }
+      .catch(error => {
+        console.error(error)
+      })
+  })
 }
 
 setInterval(check, 60000)
 
 http
   .createServer((request, response) => {
-    database
-      .find()
-      .sort({ _id: -1 })
-      .limit(1)
-      .exec((error, documents) => {
-        if (error) {
-          console.error(error)
-          response.statusCode = 500
-          response.end()
-        }
-
+    storage
+      .get('versions')
+      .then(versions => {
         response.statusCode = 200
-        response.setHeader('Content-Type', 'application/json')
-        response.write(JSON.stringify(documents, '', 2))
+        response.setHeader('content-type', 'application/json')
+        response.write(versions)
+        response.end()
+      })
+      .catch(error => {
+        console.error(error)
+        response.statusCode = 500
         response.end()
       })
   })
