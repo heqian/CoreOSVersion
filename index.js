@@ -74,7 +74,6 @@ function check () {
       .get('versions')
       .then(storedVersions => {
         if (storedVersions !== JSON.stringify(versions)) {
-          storage.set('versions', versions)
           update(
             'Stable: ' + versions.stable + '\n' +
             'Beta: ' + versions.beta + '\n' +
@@ -83,6 +82,8 @@ function check () {
         } else {
           console.log('[%s] No news is good news. :)', new Date().toString())
         }
+
+        storage.set('versions', versions)
       })
       .catch(error => {
         console.error(error)
