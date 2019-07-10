@@ -9,11 +9,7 @@ module.exports = (options, data, callback) => {
     })
 
     response.on('end', () => {
-      try {
-        callback(null, output.toString())
-      } catch (exception) {
-        callback(exception, null)
-      }
+      callback(null, output.toString())
     })
 
     response.on('error', error => {
