@@ -1,7 +1,7 @@
 const https = require('https')
 
 module.exports = (options, data, callback) => {
-  let request = https.request(options, response => {
+  const request = https.request(options, response => {
     let output = ''
 
     response.on('data', chunk => {

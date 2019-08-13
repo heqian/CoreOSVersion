@@ -27,14 +27,14 @@ const HTTPS_API_URLS = {
   }
 }
 
-let client = new Twitter({
+const client = new Twitter({
   consumer_key: process.env.CONSUMER_API_KEY,
   consumer_secret: process.env.CONSUMER_API_SECRET_KEY,
   access_token_key: process.env.ACCESS_TOKEN,
   access_token_secret: process.env.ACCESS_TOKEN_SECRET
 })
 
-let storage = new KvDb(process.env.BUCKET)
+const storage = new KvDb(process.env.BUCKET)
 
 function update (text) {
   client.post(
@@ -49,13 +49,13 @@ function update (text) {
 
 function check () {
   async.parallel({
-    'alpha': callback => {
+    alpha: callback => {
       fetch(HTTPS_API_URLS.ALPHA, null, callback)
     },
-    'beta': callback => {
+    beta: callback => {
       fetch(HTTPS_API_URLS.BETA, null, callback)
     },
-    'stable': callback => {
+    stable: callback => {
       fetch(HTTPS_API_URLS.STABLE, null, callback)
     }
   }, (error, result) => {
@@ -64,10 +64,10 @@ function check () {
       return
     }
 
-    let versions = {
-      'alpha': Object.keys(JSON.parse(result.alpha)).shift(),
-      'beta': Object.keys(JSON.parse(result.beta)).shift(),
-      'stable': Object.keys(JSON.parse(result.stable)).shift()
+    const versions = {
+      alpha: Object.keys(JSON.parse(result.alpha)).shift(),
+      beta: Object.keys(JSON.parse(result.beta)).shift(),
+      stable: Object.keys(JSON.parse(result.stable)).shift()
     }
 
     storage
