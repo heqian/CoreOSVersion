@@ -1,5 +1,5 @@
-# CoreOS Container Linux Version
-A Twitter bot @[CoreOSVersion](https://twitter.com/coreosversion) for reporting the latest versions of CoreOS Container Linux.
+# Flatcar Container Linux Version
+A Twitter bot @[FlatcarVersion](https://twitter.com/flatcarversion) for reporting the latest versions of Flatcar Container Linux.
 
 ## Usage
 ```sh

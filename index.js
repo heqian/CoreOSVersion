@@ -6,23 +6,28 @@ const KvDb = require('./kvdb')
 
 const HTTPS_API_URLS = {
   MAIN: {
-    hostname: 'coreos.com',
-    path: '/releases/releases.json',
+    hostname: 'kinvolk.io',
+    path: '/flatcar-container-linux/releases-json/releases.json',
     method: 'GET'
   },
   ALPHA: {
-    hostname: 'coreos.com',
-    path: '/releases/releases-alpha.json',
+    hostname: 'kinvolk.io',
+    path: '/flatcar-container-linux/releases-json/releases-alpha.json',
     method: 'GET'
   },
   BETA: {
-    hostname: 'coreos.com',
-    path: '/releases/releases-beta.json',
+    hostname: 'kinvolk.io',
+    path: '/flatcar-container-linux/releases-json/releases-beta.json',
     method: 'GET'
   },
   STABLE: {
-    hostname: 'coreos.com',
-    path: '/releases/releases-stable.json',
+    hostname: 'kinvolk.io',
+    path: '/flatcar-container-linux/releases-json/releases-stable.json',
+    method: 'GET'
+  },
+  LTS: {
+    hostname: 'kinvolk.io',
+    path: '/flatcar-container-linux/releases-json/releases-lts.json',
     method: 'GET'
   }
 }
@@ -47,6 +52,13 @@ function update (text) {
     })
 }
 
+function sortedKeys (json) {
+  delete json.current
+  return Object
+    .keys(json)
+    .sort((a, b) => new Date(json[a].release_date).valueOf() - new Date(json[b].release_date).valueOf())
+}
+
 function check () {
   async.parallel({
     alpha: callback => {
@@ -57,6 +69,9 @@ function check () {
     },
     stable: callback => {
       fetch(HTTPS_API_URLS.STABLE, null, callback)
+    },
+    lts: callback => {
+      fetch(HTTPS_API_URLS.LTS, null, callback)
     }
   }, (error, result) => {
     if (error) {
@@ -64,10 +79,16 @@ function check () {
       return
     }
 
+    const alpha = sortedKeys(JSON.parse(result.alpha))
+    const beta = sortedKeys(JSON.parse(result.beta))
+    const stable = sortedKeys(JSON.parse(result.stable))
+    const lts = sortedKeys(JSON.parse(result.lts))
+
     const versions = {
-      alpha: Object.keys(JSON.parse(result.alpha)).shift(),
-      beta: Object.keys(JSON.parse(result.beta)).shift(),
-      stable: Object.keys(JSON.parse(result.stable)).shift()
+      alpha: alpha[alpha.length - 1],
+      beta: beta[beta.length - 1],
+      stable: stable[stable.length - 1],
+      lts: lts[lts.length - 1]
     }
 
     storage
@@ -75,6 +96,7 @@ function check () {
       .then(storedVersions => {
         if (storedVersions !== JSON.stringify(versions)) {
           update(
+            'LTS: ' + versions.lts + '\n' +
             'Stable: ' + versions.stable + '\n' +
             'Beta: ' + versions.beta + '\n' +
             'Alpha: ' + versions.alpha
