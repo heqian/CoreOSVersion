@@ -6,28 +6,28 @@ const KvDb = require('./kvdb')
 
 const HTTPS_API_URLS = {
   MAIN: {
-    hostname: 'kinvolk.io',
-    path: '/flatcar-container-linux/releases-json/releases.json',
+    hostname: 'www.flatcar.org',
+    path: '/releases-json/releases.json',
     method: 'GET'
   },
   ALPHA: {
-    hostname: 'kinvolk.io',
-    path: '/flatcar-container-linux/releases-json/releases-alpha.json',
+    hostname: 'www.flatcar.org',
+    path: '/releases-json/releases-alpha.json',
     method: 'GET'
   },
   BETA: {
-    hostname: 'kinvolk.io',
-    path: '/flatcar-container-linux/releases-json/releases-beta.json',
+    hostname: 'www.flatcar.org',
+    path: '/releases-json/releases-beta.json',
     method: 'GET'
   },
   STABLE: {
-    hostname: 'kinvolk.io',
-    path: '/flatcar-container-linux/releases-json/releases-stable.json',
+    hostname: 'www.flatcar.org',
+    path: '/releases-json/releases-stable.json',
     method: 'GET'
   },
   LTS: {
-    hostname: 'kinvolk.io',
-    path: '/flatcar-container-linux/releases-json/releases-lts.json',
+    hostname: 'www.flatcar.org',
+    path: '/releases-json/releases-lts.json',
     method: 'GET'
   }
 }
