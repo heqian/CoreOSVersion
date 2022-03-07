@@ -5,11 +5,6 @@ const fetch = require('./fetch')
 const KvDb = require('./kvdb')
 
 const HTTPS_API_URLS = {
-  MAIN: {
-    hostname: 'www.flatcar.org',
-    path: '/releases-json/releases.json',
-    method: 'GET'
-  },
   ALPHA: {
     hostname: 'www.flatcar.org',
     path: '/releases-json/releases-alpha.json',
@@ -59,6 +54,34 @@ function sortedKeys (json) {
     .sort((a, b) => new Date(json[a].release_date).valueOf() - new Date(json[b].release_date).valueOf())
 }
 
+function hasUpdate (newVersions, oldVersions) {
+  const channels = Object.keys(newVersions)
+
+  for (const channel of channels) {
+    const newVersion = newVersions[channel]
+    const oldVersion = oldVersions[channel]
+    const newVersionSegments = newVersion.split('.')
+    const oldVersionSegments = oldVersion.split('.')
+
+    for (let i = 0; i < newVersionSegments.length; i++) {
+      const newVersionNumber = parseInt(newVersionSegments[i])
+      const oldVersionNumber = parseInt(oldVersionSegments[i])
+
+      if (newVersionNumber === oldVersionNumber) {
+        continue
+      } else if (newVersionNumber > oldVersionNumber) {
+        console.log(`[${channel}] ${newVersion} > ${oldVersion}`)
+        return true
+      } else {
+        return false
+      }
+    }
+  }
+
+  // No update by default
+  return false
+}
+
 function check () {
   async.parallel({
     alpha: callback => {
@@ -94,7 +117,7 @@ function check () {
     storage
       .get('versions')
       .then(storedVersions => {
-        if (storedVersions !== JSON.stringify(versions)) {
+        if (hasUpdate(versions, JSON.parse(storedVersions))) {
           update(
             'LTS: ' + versions.lts + '\n' +
             'Stable: ' + versions.stable + '\n' +
