@@ -54,15 +54,17 @@ function sortedKeys (json) {
     .sort((a, b) => new Date(json[a].release_date).valueOf() - new Date(json[b].release_date).valueOf())
 }
 
-function hasUpdate (newVersions, oldVersions) {
-  const channels = Object.keys(newVersions)
+function compare (newVersions, oldVersions) {
+  const latestVersions = {}
 
+  const channels = Object.keys(newVersions)
   for (const channel of channels) {
     const newVersion = newVersions[channel]
     const oldVersion = oldVersions[channel]
     const newVersionSegments = newVersion.split('.')
     const oldVersionSegments = oldVersion.split('.')
 
+    latestVersions[channel] = oldVersion
     for (let i = 0; i < newVersionSegments.length; i++) {
       const newVersionNumber = parseInt(newVersionSegments[i])
       const oldVersionNumber = parseInt(oldVersionSegments[i])
@@ -71,15 +73,16 @@ function hasUpdate (newVersions, oldVersions) {
         continue
       } else if (newVersionNumber > oldVersionNumber) {
         console.log(`[${channel}] ${newVersion} > ${oldVersion}`)
-        return true
+        latestVersions[channel] = newVersion
+        break
       } else {
-        return false
+        break
       }
     }
   }
 
   // No update by default
-  return false
+  return latestVersions
 }
 
 function check () {
@@ -117,18 +120,20 @@ function check () {
     storage
       .get('versions')
       .then(storedVersions => {
-        if (hasUpdate(versions, JSON.parse(storedVersions))) {
-          update(
-            'LTS: ' + versions.lts + '\n' +
-            'Stable: ' + versions.stable + '\n' +
-            'Beta: ' + versions.beta + '\n' +
-            'Alpha: ' + versions.alpha
-          )
-        } else {
+        const latestVersions = compare(versions, JSON.parse(storedVersions))
+
+        if (JSON.stringify(latestVersions) === storedVersions) {
           console.log('[%s] No news is good news. :)', new Date().toString())
+        } else {
+          update(
+            'LTS: ' + latestVersions.lts + '\n' +
+            'Stable: ' + latestVersions.stable + '\n' +
+            'Beta: ' + latestVersions.beta + '\n' +
+            'Alpha: ' + latestVersions.alpha
+          )
         }
 
-        storage.set('versions', versions)
+        storage.set('versions', latestVersions)
       })
       .catch(error => {
         console.error(error)

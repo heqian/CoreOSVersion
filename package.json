@@ -4,6 +4,7 @@
 	"description": "A Twitter bot @CoreOSVersion for reporting the latest versions of CoreOS.",
 	"main": "index.js",
 	"scripts": {
+		"format": "standard --fix",
 		"test": "PORT=8080 node index.js",
 		"start": "node index.js"
 	},
@@ -20,5 +21,8 @@
 	"dependencies": {
 		"async": "*",
 		"twitter": "*"
+	},
+	"devDependencies": {
+		"standard": "*"
 	}
 }
